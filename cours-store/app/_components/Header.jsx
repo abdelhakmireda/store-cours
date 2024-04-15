@@ -1,14 +1,38 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { UserButton, useUser } from '@clerk/nextjs'
 import { ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
+import { CartContext } from '../_context/CartContext';
+import CartApis from '../_utils/CartApis';
+import Cart from '../_components/Cart'
 
 function Header() {
-  const {user} = useUser();
+  const [openCart,setOpenCart] =useState(false);
+  const { user } = useUser();
+  useEffect(() => {
+    user && getCartItems();
+  }, [user])
+  const getCartItems = () => {
+    CartApis.getUserCartItems(user.primaryEmailAddress.emailAddress).then(res => {
+      console.log('response from cart items', res?.data?.data);
+      res?.data?.data.forEach(citem => {
+        // Déclarer citem ici avant de l'utiliser
+        setCart(oldCart => [
+          ...oldCart,
+          {
+            id: citem?.id,
+            product: citem?.attributes?.products?.data[0]
+          }
+        ]);
+      });
+    });
+  };
+
   // Au début, isLoggedIn est false car l'URL contient 'sign-in'
-  const [isLoggedIn, setIslLoggedIn] = useState(false);
+  const [isLoggedIn, setIslLoggedIn] = useState();
+  const { cart, setCart } = useContext(CartContext);
 
   // L'effet est exécuté une fois après le rendu initial
   // Il vérifie l'URL et met à jour l'état isLoggedIn si nécessaire
@@ -18,15 +42,15 @@ function Header() {
 
   // Comme l'URL contient 'sign-in', !isLoggedIn est true
   // Donc, quelque chose sera renvoyé dans ce cas
-  return !isLoggedIn &&(
+  return !isLoggedIn && (
     <header className="bg-white shadow-md">
       <div className="mx-auto flex h-16 max-w-screen-xl items-center gap-8 px-4 sm:px-6 lg:px-8 ">
-      <Image src='/logo.svg'
-      alt='logo'
-      width={50}
-      height={50}
-      property=''
-      />
+        <Image src='/logo.svg'
+          alt='logo'
+          width={50}
+          height={50}
+          property=''
+        />
         <div className="flex flex-1 items-center justify-end md:justify-between">
           <nav aria-label="Global" className="hidden md:block">
             <ul className="flex items-center gap-6 text-sm">
@@ -57,7 +81,7 @@ function Header() {
           </nav>
 
           <div className="flex items-center gap-4">
-            {! user ?
+            {!user ?
               <div className="sm:flex sm:gap-4">
                 <Link
                   className="block rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-teal-500"
@@ -76,12 +100,14 @@ function Header() {
               :
               <div className='flex items-center gap-5'>
                 <h2 className='flex items-center gap-1 cursor-pointer '>
-                  <ShoppingCart />(0)
+                  <ShoppingCart onClick={()=>setOpenCart(!openCart)}/>
+                  ({cart?.length})
                 </h2>
-                <UserButton afterSignOutUrl='/'/>
+                <UserButton afterSignOutUrl='/' />
+                {openCart && <Cart />}
               </div>
 
-              }
+            }
 
             <button
               className="block rounded bg-gray-100 p-2.5 text-gray-600 transition hover:text-gray-600/75 md:hidden"

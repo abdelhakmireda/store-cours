@@ -6,7 +6,7 @@ import Link from 'next/link'
 function ProductItem({ product }) {
   return (
     <Link href={`/product-details/${product?.id}`} className='border-gray-500 rounded-lg hover:border hover:shadow-md hover:cursor-pointer'>
-      <div>
+      <div className='w-[fit-content]'>
         <Image
           src={product?.attributes?.banner?.data?.attributes?.url}
           alt='banner-card'
